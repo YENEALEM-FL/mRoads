@@ -8,7 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.util.Objects;
 
-public class GeoLocationConfiguration extends Configuration {
+public class GeolocationConfiguration extends Configuration {
     @NotNull
     @Valid
     private DataSourceFactory dataSourceFactory;

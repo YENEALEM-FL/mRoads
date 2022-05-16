@@ -2,38 +2,52 @@ package com.mroads.project.cacheStore;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
+import com.mroads.project.core.Geolocation;
+import com.mroads.project.dao.GeolocationDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class CacheStore<T> {
-    private final LoadingCache<String, T> cache;
+public class CacheStore{
+    private static final Logger logger = LoggerFactory.getLogger(CacheStore.class);
+    private static final CacheStore cacheStore = new CacheStore();
 
-    //Constructor to build Cache Store
-    public CacheStore(int expiryDuration, TimeUnit timeUnit, T value) {
-        cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.SECONDS)
-                .build(new CacheLoader<String, T>() {
-                    @Override
-                    public T load(String key) throws Exception {
-                        return add(key,value );
-                    }
-                });
+    public static CacheStore getInstance() {
+        return cacheStore;
     }
 
-    //Method to fetch previously stored record using record key
-    public T getEntry(String key) throws Exception{
-        return cache.get(key);
-    }
+    private static LoadingCache<String, Geolocation> geoCache;
 
-    //Method to put a new record in Cache Store with record key
-    public T add(String key, T value) {
-        if(key != null && value != null) {
-            cache.put(key, value);
-            System.out.println("Record stored in "
-                    + value.getClass().getSimpleName()
-                    + " Cache with Key = " + key);
+    public void initGeoCache(GeolocationDAO geolocationDAO) {
+        if (geoCache == null) {
+            geoCache = CacheBuilder.newBuilder()
+                    .concurrencyLevel(10)
+                    .maximumSize(200) // Maximum of 200 records can be cached
+                    .expireAfterAccess(1, TimeUnit.MINUTES) // Cache will expire after 30 minutes
+                    .recordStats()
+                    .build(new CacheLoader<String, Geolocation>() { // Build the CacheLoader
+                        @Override
+                        public Geolocation load(String ipAddress) throws Exception {
+                            logger.info("Fetching Geolocation Data from Cache");
+                            return geolocationDAO.findGeoLocationByAddress(ipAddress);
+                        }
+                    });
         }
-        return value;
+    }
+
+    public Geolocation getGeolocationDataFromCache(String key) {
+        try {
+            CacheStats cacheStats = geoCache.stats();
+            logger.info("CacheStats = {} ", cacheStats);
+            return geoCache.get(key);
+        } catch (ExecutionException e) {
+            logger.error("Error Retrieving Elements from the Geolocation Cache"
+                    + e.getMessage());
+        }
+        return null;
     }
 }

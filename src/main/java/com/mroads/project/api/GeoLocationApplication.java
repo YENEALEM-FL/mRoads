@@ -1,20 +1,23 @@
 package com.mroads.project.api;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.mroads.project.config.GeoLocationConfiguration;
-import com.mroads.project.dao.GeoLocationDAO;
-import com.mroads.project.entity.GeoLocation;
-import com.mroads.project.resources.GeoLocationResource;
+import com.mroads.project.cacheStore.CacheStore;
+import com.mroads.project.config.GeolocationConfiguration;
+import com.mroads.project.core.Geolocation;
+import com.mroads.project.dao.GeolocationDAO;
+import com.mroads.project.exception.GeolocationDataNotFoundException;
+import com.mroads.project.resources.GeolocationResource;
+
 import io.dropwizard.Application;
 import io.dropwizard.db.PooledDataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
-public class GeoLocationApplication extends Application<GeoLocationConfiguration> {
+public class GeolocationApplication extends Application<GeolocationConfiguration> {
 
     public static void main(final String[] args) throws Exception {
-        new GeoLocationApplication().run(args);
+        new GeolocationApplication().run(args);
     }
 
     @Override
@@ -23,32 +26,40 @@ public class GeoLocationApplication extends Application<GeoLocationConfiguration
     }
 
     @Override
-    public void run(final GeoLocationConfiguration configuration,
+    public void run(final GeolocationConfiguration configuration,
                     final Environment environment) {
+        final CacheStore cacheStore = CacheStore.getInstance();
+        GeolocationDAO geolocationDAO = new GeolocationDAO(hibernateBundle.getSessionFactory());
+        environment.jersey().register(new GeolocationResource(geolocationDAO));
 
-        // TODO: implement application
-        GeoLocationDAO geoLocationDAO = new GeoLocationDAO(hibernateBundle.getSessionFactory());
-        environment.jersey().register(new GeoLocationResource(new GeoLocationDAO(hibernateBundle.getSessionFactory())));
+        cacheStore.initGeoCache(geolocationDAO);
+        final GeolocationResource resource = new GeolocationResource(geolocationDAO);
+        environment.jersey().register(resource);
+
         environment.healthChecks().register("geoLocation", new HealthCheck() {
             @Override
             protected Result check() throws Exception {
-
-                return Result.healthy();
+                try {
+                    return Result.healthy();
+                }
+                catch (Exception e){
+                    throw new GeolocationDataNotFoundException("");
+                }
             }
         });
     }
 
-      HibernateBundle<GeoLocationConfiguration> hibernateBundle = new HibernateBundle<GeoLocationConfiguration>(GeoLocation.class) {
+      HibernateBundle<GeolocationConfiguration> hibernateBundle = new HibernateBundle<GeolocationConfiguration>(Geolocation.class) {
 
         @Override
-          public PooledDataSourceFactory getDataSourceFactory(GeoLocationConfiguration geoLocationConfiguration) {
+          public PooledDataSourceFactory getDataSourceFactory(GeolocationConfiguration geoLocationConfiguration) {
               return geoLocationConfiguration.getDataSourceFactory();
           }
 
       };
 
     @Override
-    public void initialize(Bootstrap<GeoLocationConfiguration> bootstrap){
+    public void initialize(Bootstrap<GeolocationConfiguration> bootstrap){
         bootstrap.addBundle(hibernateBundle);
     }
 

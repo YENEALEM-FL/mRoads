@@ -1,15 +1,23 @@
-package com.mroads.project.entity;
+package com.mroads.project.core;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
+// use @Data for setter and getter , @AllArgsConstuctor and NonArgsConstructor from Lombok to make the code cleaner
 @Entity
-@Table(name = "geo_location")
-
-public class GeoLocation {
-	//Note: you can add @NotNull, @Size(), and other anotations according to your coding preference
+@Table(name = "geolocation")
+@NamedQuery(
+        name = "org.example.core.Geolocation.findAll",
+        query = "SELECT g FROM Geolocation g"
+)
+public class Geolocation {
     @Id
     @Column(name = "id")
-    private String id;
+    private String ipAddress;
     @Column(name = "status")
     private String status;
     @Column(name = "countryCode")
@@ -37,12 +45,22 @@ public class GeoLocation {
     @Column(name="query")
     private String Query;
 
-    public String getId() {
-        return id;
+    @CreationTimestamp
+    private LocalDateTime creationTime;
+
+    @UpdateTimestamp
+    private LocalDateTime updateTime;
+
+    public Geolocation() {
+
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     public String getStatus() {
@@ -117,7 +135,7 @@ public class GeoLocation {
         this.timeZone = timeZone;
     }
 
-    public String getISPName() {
+    public String getiSPName() {
         return iSPName;
     }
 
@@ -148,4 +166,34 @@ public class GeoLocation {
     public void setQuery(String query) {
         Query = query;
     }
+
+    public LocalDateTime getCreationTime() {
+        return creationTime;
+    }
+
+    public void setCreationTime(LocalDateTime creationTime) {
+        this.creationTime = creationTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Geolocation that = (Geolocation) o;
+        return Double.compare(that.latitude, latitude) == 0 && Double.compare(that.longitude, longitude) == 0 && Objects.equals(ipAddress, that.ipAddress) && Objects.equals(status, that.status) && Objects.equals(countryCode, that.countryCode) && Objects.equals(region, that.region) && Objects.equals(regionName, that.regionName) && Objects.equals(city, that.city) && Objects.equals(zipCode, that.zipCode) && Objects.equals(timeZone, that.timeZone) && Objects.equals(iSPName, that.iSPName) && Objects.equals(organization, that.organization) && Objects.equals(asNumber, that.asNumber) && Objects.equals(Query, that.Query) && Objects.equals(creationTime, that.creationTime) && Objects.equals(updateTime, that.updateTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ipAddress, status, countryCode, region, regionName, city, zipCode, latitude, longitude, timeZone, iSPName, organization, asNumber, Query, creationTime, updateTime);
+    }
+
 }

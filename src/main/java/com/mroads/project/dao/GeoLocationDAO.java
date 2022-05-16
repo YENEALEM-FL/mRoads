@@ -1,31 +1,33 @@
 package com.mroads.project.dao;
 
-import com.mroads.project.entity.GeoLocation;
+
+import com.mroads.project.core.Geolocation;
 import io.dropwizard.hibernate.AbstractDAO;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.SessionFactory;
 
-import javax.persistence.Query;
+import javax.validation.Valid;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
-public class GeoLocationDAO extends AbstractDAO<GeoLocation> {
-    public GeoLocationDAO(SessionFactory sessionFactory) {
+
+public class GeolocationDAO extends AbstractDAO<Geolocation> {
+
+
+    public GeolocationDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 
-    public GeoLocation findGeoLocationByAddress(String id){
-        String GeoQuery = "from GeoLocation g where g.id = :id";
-        Query query = currentSession().createQuery(GeoQuery);
-        return (GeoLocation) query.getSingleResult();
+    public Geolocation findGeoLocationByAddress(String id){
+
+        return get(id);
     }
 
-    public void saveGeolocation(GeoLocation geoLocation){
+    public Geolocation createGeolocation(Geolocation geolocation){
 
-        if(StringUtils.isEmpty(geoLocation.getId()))
-            geoLocation.setId(UUID.randomUUID().toString());
-         persist(geoLocation);
+         return persist(geolocation);
     }
-
+    public List<Geolocation> findAll() {
+        return list(namedTypedQuery("org.example.core.Geolocation.findAll"));
+    }
 
 }

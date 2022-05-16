@@ -1,8 +1,8 @@
 package com.mroads.project.exception;
 
-public class GeoLocationDataNotFoundException extends Exception {
+public class GeolocationDataNotFoundException extends Exception {
 
-    public GeoLocationDataNotFoundException(String message){
+    public GeolocationDataNotFoundException(String message){
         super(message);
     }
 }
